@@ -1,9 +1,9 @@
 # LangChain Chatbot
 
-A simple and interactive chatbot built with LangChain, supporting both OpenAI (GPT-3.5, GPT-4, GPT-4 Turbo Preview) and Google Gemini (gemini-2.0-flash) models. This application provides a conversational interface with memory capabilities, multi-modal support (text and images, where supported by the model), and easy configuration options.
+A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.5 Turbo), Google Gemini (gemini-2.0-flash), and Google Vertex AI (chat-bison) models. This application provides a conversational interface with memory capabilities, multi-modal support (text and images, where supported by the model), and easy configuration options.
 
-- 🤖 **Multi-provider:** Use either OpenAI or Google Gemini models
-- 🖼️ **Multi-modal:** Supports text and (where available) image input/output with Gemini (gemini-2.0-flash) and future OpenAI models
+- 🤖 **Multi-provider:** Use OpenAI, Google Gemini, or Google Vertex AI models
+- 🖼️ **Multi-modal:** Supports text and (where available) image input/output with Gemini, Vertex AI, and future OpenAI models
 - 🧠 **Conversation memory:** Remembers chat history for context-aware responses
 - ⚙️ **Configurable:** Easily switch models and API keys in the sidebar
 - 💬 **Modern UI:** Real-time chat with typing indicators and clear chat functionality
@@ -12,7 +12,7 @@ A simple and interactive chatbot built with LangChain, supporting both OpenAI (G
 
 - 🤖 Interactive chat interface with Streamlit
 - 🧠 Conversation memory using LangChain
-- ⚙️ Configurable model selection (GPT-3.5, GPT-4, etc.)
+- ⚙️ Configurable model selection (OpenAI, Gemini, Vertex AI)
 - 🌡️ Adjustable temperature for response creativity
 - 💬 Real-time chat with typing indicators
 - 🗑️ Clear chat functionality
@@ -20,13 +20,17 @@ A simple and interactive chatbot built with LangChain, supporting both OpenAI (G
 
 ## Supported Models
 
-- **OpenAI (GPT-3.5, GPT-4, GPT-4 Turbo Preview)**
+- **OpenAI (GPT-3.5 Turbo)**
 - **Google Gemini (gemini-2.0-flash)**
+- **Google Vertex AI (chat-bison)**
 
 ## Prerequisites
 
 - Python 3.8 or higher
-- OpenAI API key
+- API keys for your chosen provider(s):
+  - OpenAI API key (for GPT-3.5 Turbo)
+  - Google Gemini API key (for gemini-2.0-flash)
+  - Google Cloud service account key + project ID (for Vertex AI)
 
 ## Setup
 
@@ -52,6 +56,21 @@ A simple and interactive chatbot built with LangChain, supporting both OpenAI (G
    ```
    - Edit `.env` and replace the placeholders with your actual API keys
 
+### Environment Variables
+Copy `.env.example` to `.env` and fill in the required keys:
+
+```
+OPENAI_API_KEY=your-openai-api-key
+GEMINI_API_KEY=your-gemini-api-key
+VERTEXAI_PROJECT_ID=your-gcp-project-id
+VERTEXAI_REGION=us-central1
+```
+
+- For Vertex AI, you must also set up a Google Cloud service account and download the JSON key (see Vertex AI Setup above).
+
+### .gitignore
+- The `.gitignore` file ensures that `venv/`, `.env`, `.env.example`, and Google Cloud service account keys are not committed to the repository.
+
 ## Usage
 
 1. **Start the application:**
@@ -72,7 +91,7 @@ A simple and interactive chatbot built with LangChain, supporting both OpenAI (G
    - Use the "Clear Chat" button to start a new conversation
 
 ## Notes
-- You can use either OpenAI or Google Gemini (gemini-2.0-flash) models by selecting them in the sidebar.
+- You can use OpenAI, Google Gemini (gemini-2.0-flash), or Google Vertex AI (chat-bison) models by selecting them in the sidebar.
 - The sidebar will show the status of both API keys and allow you to enter or update them at any time.
 - Debug information is shown in the sidebar and above each assistant response to help you verify which model and key are being used.
 
@@ -143,3 +162,76 @@ Feel free to submit issues, feature requests, or pull requests to improve this c
 ## License
 
 This project is open source and available under the MIT License. 
+
+## How to Find Your Google Cloud Project ID
+
+Your **Google Cloud Project ID** is a unique identifier for your project in Google Cloud. Here’s how you can find it:
+
+### Method 1: Google Cloud Console (Web UI)
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. At the top left, click the project dropdown (it may show your current project name).
+3. In the list, you’ll see all your projects.  
+   - The **Project ID** is shown in the “ID” column (not the “Name” column).
+   - It usually looks like: `my-sample-project-123456`
+
+### Method 2: Command Line (gcloud CLI)
+If you have the Google Cloud SDK installed, run:
+```sh
+gcloud projects list
+```
+This will show a table with your project names, IDs, and numbers.
+
+### Method 3: Billing or API Dashboard
+- When you enable billing or APIs, the project ID is often shown in the dashboard or URL.
+
+**Note:**
+- The Project ID is globally unique and is used in API calls and configuration.
+- Do not confuse it with the Project Name (which is just a label and can be changed). 
+
+## How to Get Google Vertex AI Credentials
+
+To use Vertex AI, you need a Google Cloud service account key (JSON file) with the right permissions. Here’s how to get it:
+
+1. **Create a Google Cloud Project**
+   - Go to the [Google Cloud Console](https://console.cloud.google.com/).
+   - Click the project dropdown at the top and select “New Project”.
+
+2. **Enable Vertex AI API**
+   - In your project, go to “APIs & Services” > “Enable APIs and Services”.
+   - Search for “Vertex AI API” and enable it.
+
+3. **Create a Service Account**
+   - Go to “IAM & Admin” > “Service Accounts”.
+   - Click “Create Service Account”.
+   - Give it a name (e.g., `vertex-ai-sa`).
+   - Click “Create and Continue”.
+
+4. **Grant Vertex AI Permissions**
+   - Assign the role: `Vertex AI User` (or `Vertex AI Admin` for full access).
+   - Click “Continue” and then “Done”.
+
+5. **Create and Download a Service Account Key**
+   - Click on your new service account in the list.
+   - Go to the “Keys” tab.
+   - Click “Add Key” > “Create new key”.
+   - Choose “JSON” and click “Create”.
+   - Download the JSON file and keep it safe (this is your “API key” for Vertex AI).
+
+6. **Set the Environment Variable**
+   - Set the environment variable in your shell or `.env` file:
+     ```
+     GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-file.json
+     ```
+     Replace `/path/to/your/service-account-file.json` with the actual path to your downloaded JSON key.
+
+7. **Set Project and Region**
+   - In your `.env` or via the app sidebar, set:
+     ```
+     VERTEXAI_PROJECT_ID=your-gcp-project-id
+     VERTEXAI_REGION=us-central1
+     ```
+
+**References:**
+- [Google Cloud: Creating and managing service account keys](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
+- [Vertex AI Python Client Authentication](https://cloud.google.com/vertex-ai/docs/start/client-auth) 
+

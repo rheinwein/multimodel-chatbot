@@ -3,12 +3,21 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_vertexai import ChatVertexAI
 from langchain.schema import HumanMessage, AIMessage
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
 
 # Load environment variables
 load_dotenv()
+
+# Helper function to mask API keys
+def mask_key(key):
+    if not key:
+        return "[not set]"
+    if len(key) <= 8:
+        return key
+    return key[:4] + "..." + key[-4:]
 
 # Page configuration
 st.set_page_config(
@@ -17,7 +26,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize session state for chat history
+# Initialize session state for chat history and API keys
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -26,55 +35,57 @@ if "conversation" not in st.session_state or "llm_model" not in st.session_state
     st.session_state.temperature = float(os.getenv("LLM_TEMPERATURE", 0.7))
     st.session_state.conversation = None
 
-# Sidebar for configuration
+# Initialize API keys from environment variables
+if "openai_api_key" not in st.session_state:
+    st.session_state.openai_api_key = os.getenv("OPENAI_API_KEY", "")
+if "gemini_api_key" not in st.session_state:
+    st.session_state.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
+if "vertexai_project" not in st.session_state:
+    st.session_state.vertexai_project = os.getenv("VERTEXAI_PROJECT_ID", "")
+if "vertexai_region" not in st.session_state:
+    st.session_state.vertexai_region = os.getenv("VERTEXAI_REGION", "us-central1")
+
+# Sidebar for API keys and model selection
 with st.sidebar:
-    st.header("Configuration")
-    
-    # Model selection
-    model = st.selectbox(
-        "Select Model",
-        ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo-preview", "gemini-2.0-flash"],
-        index=["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo-preview", "gemini-2.0-flash"].index(st.session_state.llm_model) if st.session_state.llm_model in ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo-preview", "gemini-2.0-flash"] else 0
+    st.title("🔑 API & Model Configuration")
+
+    # Model provider selection
+    model_provider = st.selectbox(
+        "Select Model Provider",
+        ["OpenAI", "Google Gemini", "Google Vertex AI"],
+        index=0,
     )
-    st.session_state.llm_model = model
+    if model_provider == "OpenAI":
+        openai_api_key = st.text_input("OpenAI API Key", type="password", value=st.session_state.get("openai_api_key", ""))
+        if openai_api_key:
+            st.session_state["openai_api_key"] = openai_api_key
+    elif model_provider == "Google Gemini":
+        gemini_api_key = st.text_input("Gemini API Key", type="password", value=st.session_state.get("gemini_api_key", ""))
+        if gemini_api_key:
+            st.session_state["gemini_api_key"] = gemini_api_key
+    elif model_provider == "Google Vertex AI":
+        vertexai_project = st.text_input("Vertex AI Project ID", value=st.session_state.get("vertexai_project", ""))
+        vertexai_region = st.text_input("Vertex AI Region", value=st.session_state.get("vertexai_region", "us-central1"))
+        if vertexai_project:
+            st.session_state["vertexai_project"] = vertexai_project
+        if vertexai_region:
+            st.session_state["vertexai_region"] = vertexai_region
     
-    # Temperature slider
-    temperature = st.slider("Temperature", 0.0, 1.0, st.session_state.temperature, 0.1)
-    st.session_state.temperature = temperature
-    
-    # API key input for Gemini
-    if "gemini_api_key" not in st.session_state:
-        st.session_state.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
-    if "openai_api_key" not in st.session_state:
-        st.session_state.openai_api_key = os.getenv("OPENAI_API_KEY", "")
-
-    if model.startswith("gemini"):
-        gemini_api_key = st.text_input("Gemini API Key", value=st.session_state.gemini_api_key, type="password")
-        st.session_state.gemini_api_key = gemini_api_key
-    else:
-        api_key = st.text_input("OpenAI API Key", value=st.session_state.openai_api_key, type="password")
-        st.session_state.openai_api_key = api_key
-
-    # Show status for both keys
     st.markdown("---")
-    st.subheader("API Key Status")
-    def mask_key(key):
-        if not key:
-            return "[not set]"
-        if len(key) <= 8:
-            return key
-        return key[:4] + "..." + key[-4:]
-    st.write(f"**Selected Model:** `{st.session_state.llm_model}`")
-    st.write(f"**OpenAI Key:** `{mask_key(st.session_state.openai_api_key)}`")
-    st.write(f"**Gemini Key:** `{mask_key(st.session_state.gemini_api_key)}`")
-    if st.session_state.openai_api_key:
-        st.success("✅ OpenAI API key configured")
-    else:
-        st.warning("⚠️ OpenAI API key not found!")
-    if st.session_state.gemini_api_key:
-        st.success("✅ Gemini API key configured")
-    else:
-        st.warning("⚠️ Gemini API key not found!")
+    st.subheader("🔑 API Key Status")
+    st.write(f"**Current Provider:** {model_provider}")
+    st.write(f"**OpenAI Key:** {'✅' if st.session_state.get('openai_api_key') else '❌'}")
+    st.write(f"**Gemini Key:** {'✅' if st.session_state.get('gemini_api_key') else '❌'}")
+    st.write(f"**Vertex Project:** {st.session_state.get('vertexai_project', '❌')}")
+    st.write(f"**Vertex Region:** {st.session_state.get('vertexai_region', '❌')}")
+    
+    # Show masked keys for debugging
+    st.markdown("---")
+    st.subheader("🔍 Debug Info")
+    st.write(f"**OpenAI:** `{mask_key(st.session_state.get('openai_api_key', ''))}`")
+    st.write(f"**Gemini:** `{mask_key(st.session_state.get('gemini_api_key', ''))}`")
+    st.write(f"**Vertex Project:** `{st.session_state.get('vertexai_project', '[not set]')}`")
+    st.write(f"**Vertex Region:** `{st.session_state.get('vertexai_region', '[not set]')}`")
 
     # Clear chat button
     if st.button("Clear Chat"):
@@ -83,21 +94,33 @@ with st.sidebar:
             st.session_state.conversation.memory.clear()
         st.rerun()
 
+# LLM selection logic
+if model_provider == "OpenAI":
+    llm = ChatOpenAI(
+        openai_api_key=st.session_state.get("openai_api_key"),
+        model="gpt-3.5-turbo",
+        temperature=0.7,
+    )
+elif model_provider == "Google Gemini":
+    llm = ChatGoogleGenerativeAI(
+        google_api_key=st.session_state.get("gemini_api_key"),
+        model="gemini-2.0-flash",
+        temperature=0.7,
+    )
+elif model_provider == "Google Vertex AI":
+    llm = ChatVertexAI(
+        project=st.session_state.get("vertexai_project"),
+        location=st.session_state.get("vertexai_region", "us-central1"),
+        model="chat-bison",
+        temperature=0.7,
+    )
+else:
+    st.error("No valid model provider selected.")
+    st.stop()
+
 # Initialize the conversation chain if needed
 if st.session_state.conversation is None or st.session_state.llm_model != st.session_state.get("active_model") or st.session_state.temperature != st.session_state.get("active_temperature"):
     try:
-        if st.session_state.llm_model.startswith("gemini"):
-            llm = ChatGoogleGenerativeAI(
-                model=st.session_state.llm_model,
-                temperature=st.session_state.temperature,
-                google_api_key=st.session_state.get("gemini_api_key", "")
-            )
-        else:
-            llm = ChatOpenAI(
-                model=st.session_state.llm_model,
-                temperature=st.session_state.temperature,
-                openai_api_key=st.session_state.get("openai_api_key", "")
-            )
         memory = ConversationBufferMemory()
         st.session_state.conversation = ConversationChain(
             llm=llm,
@@ -134,11 +157,13 @@ if prompt := st.chat_input("What would you like to ask?"):
     # Get bot response
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
-        debug_info = f"**[DEBUG] Model:** `{st.session_state.llm_model}`  "
-        if st.session_state.llm_model.startswith("gemini"):
-            debug_info += f"**Gemini Key:** `{mask_key(st.session_state.gemini_api_key)}`"
-        else:
-            debug_info += f"**OpenAI Key:** `{mask_key(st.session_state.openai_api_key)}`"
+        debug_info = f"**[DEBUG] Model:** `{model_provider}`  "
+        if model_provider == "Google Gemini":
+            debug_info += f"**Gemini Key:** `{mask_key(st.session_state.get('gemini_api_key', ''))}`"
+        elif model_provider == "OpenAI":
+            debug_info += f"**OpenAI Key:** `{mask_key(st.session_state.get('openai_api_key', ''))}`"
+        elif model_provider == "Google Vertex AI":
+            debug_info += f"**Vertex Project:** `{st.session_state.get('vertexai_project', '')}` **Region:** `{st.session_state.get('vertexai_region', '')}`"
         st.info(debug_info)
         if st.session_state.conversation:
             try:
