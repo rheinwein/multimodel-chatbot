@@ -1,6 +1,12 @@
 # LangChain Chatbot
 
-A simple and interactive chatbot built with LangChain, OpenAI, and Streamlit. This application provides a conversational interface with memory capabilities and easy configuration options.
+A simple and interactive chatbot built with LangChain, supporting both OpenAI (GPT-3.5, GPT-4, GPT-4 Turbo Preview) and Google Gemini (gemini-2.0-flash) models. This application provides a conversational interface with memory capabilities, multi-modal support (text and images, where supported by the model), and easy configuration options.
+
+- 🤖 **Multi-provider:** Use either OpenAI or Google Gemini models
+- 🖼️ **Multi-modal:** Supports text and (where available) image input/output with Gemini (gemini-2.0-flash) and future OpenAI models
+- 🧠 **Conversation memory:** Remembers chat history for context-aware responses
+- ⚙️ **Configurable:** Easily switch models and API keys in the sidebar
+- 💬 **Modern UI:** Real-time chat with typing indicators and clear chat functionality
 
 ## Features
 
@@ -12,36 +18,39 @@ A simple and interactive chatbot built with LangChain, OpenAI, and Streamlit. Th
 - 🗑️ Clear chat functionality
 - 🔧 Easy configuration through sidebar
 
+## Supported Models
+
+- **OpenAI (GPT-3.5, GPT-4, GPT-4 Turbo Preview)**
+- **Google Gemini (gemini-2.0-flash)**
+
 ## Prerequisites
 
 - Python 3.8 or higher
 - OpenAI API key
 
-## Installation
+## Setup
 
 1. **Clone or navigate to the project directory:**
    ```bash
    cd langchain-chatbot
    ```
-
 2. **Create a virtual environment (recommended):**
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
-
 3. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
-
 4. **Set up your environment variables:**
    - Copy `.env.example` to `.env`
-   - Add your OpenAI API key:
-   ```bash
-   cp .env.example .env
+   - Add your API keys:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here  # [Get your OpenAI API key here](https://platform.openai.com/api-keys)
+   GEMINI_API_KEY=your_gemini_api_key_here  # [Get your Gemini API key here](https://aistudio.google.com/app/apikey)
    ```
-   - Edit `.env` and replace `your_openai_api_key_here` with your actual OpenAI API key
+   - Edit `.env` and replace the placeholders with your actual API keys
 
 ## Usage
 
@@ -49,20 +58,28 @@ A simple and interactive chatbot built with LangChain, OpenAI, and Streamlit. Th
    ```bash
    streamlit run app.py
    ```
-
 2. **Open your browser:**
    - The application will automatically open in your default browser
    - Usually available at `http://localhost:8501`
-
 3. **Configure the chatbot:**
-   - Use the sidebar to select your preferred model
+   - Use the sidebar to select your preferred model (OpenAI or Gemini)
+   - Enter the appropriate API key for the selected model
    - Adjust the temperature for response creativity
-   - Check if your API key is properly configured
-
+   - Check if your API key is properly configured (status is shown for both OpenAI and Gemini)
 4. **Start chatting:**
    - Type your messages in the chat input at the bottom
    - The chatbot will respond with context-aware replies
    - Use the "Clear Chat" button to start a new conversation
+
+## Notes
+- You can use either OpenAI or Google Gemini (gemini-2.0-flash) models by selecting them in the sidebar.
+- The sidebar will show the status of both API keys and allow you to enter or update them at any time.
+- Debug information is shown in the sidebar and above each assistant response to help you verify which model and key are being used.
+
+## Troubleshooting
+- If you see a 401 error, double-check that the correct API key is entered for the selected model.
+- For Gemini, your key should **not** start with `sk-` (that's an OpenAI key).
+- For OpenAI, your key should start with `sk-`.
 
 ## Configuration Options
 
@@ -99,30 +116,6 @@ langchain-chatbot/
 - **Chat Interface**: Modern chat UI with user/assistant messages
 - **Sidebar Configuration**: Easy access to settings
 - **Error Handling**: Graceful handling of API errors
-
-## Troubleshooting
-
-### Common Issues
-
-1. **"OpenAI API key not found" error:**
-   - Ensure you've created a `.env` file with your API key
-   - Check that the API key is valid and has sufficient credits
-
-2. **Import errors:**
-   - Make sure you've installed all dependencies: `pip install -r requirements.txt`
-   - Verify you're using the correct Python version (3.8+)
-
-3. **Streamlit not starting:**
-   - Check if port 8501 is available
-   - Try running with a different port: `streamlit run app.py --server.port 8502`
-
-### Getting an OpenAI API Key
-
-1. Visit [OpenAI's website](https://platform.openai.com/)
-2. Sign up or log in to your account
-3. Navigate to the API section
-4. Create a new API key
-5. Copy the key and add it to your `.env` file
 
 ## Customization
 
