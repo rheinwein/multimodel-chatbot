@@ -209,7 +209,7 @@ if (
 
 # Header
 st.title("🤖 LangChain Chatbot")
-st.markdown("A simple chatbot built with LangChain, supporting OpenAI, Gemini, Claude, Google Vertex AI, Ollama (Llama3), and Streamlit.")
+st.markdown("A simple chatbot built with LangChain, supporting OpenAI (🔵), Google Gemini (🟣), Anthropic Claude (🟡), Google Vertex AI (🟢), Ollama  with Llama3 (🟠), and Streamlit.")
 
 # Main chat interface
 st.markdown("---")
@@ -226,8 +226,9 @@ PROVIDER_AVATARS = {
 # Display chat messages
 for message in st.session_state.messages:
     if message["role"] == "assistant":
-        # Use the avatar for the current provider
-        avatar = PROVIDER_AVATARS.get(st.session_state.get("active_provider", "OpenAI"), "🤖")
+        # Use the avatar for the provider that generated this message
+        provider = message.get("provider", st.session_state.get("active_provider", "OpenAI"))
+        avatar = PROVIDER_AVATARS.get(provider, "🤖")
         with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
     else:
@@ -247,32 +248,20 @@ if prompt := st.chat_input("What would you like to ask?"):
     avatar = PROVIDER_AVATARS.get(model_provider, "🤖")
     with st.chat_message("assistant", avatar=avatar):
         message_placeholder = st.empty()
-        debug_info = f"**[DEBUG] Model:** `{model_provider}`  "
-        if model_provider == "Google Gemini":
-            debug_info += f"**Gemini Key:** `{mask_key(st.session_state.get('gemini_api_key', ''))}`"
-        elif model_provider == "OpenAI":
-            debug_info += f"**OpenAI Key:** `{mask_key(st.session_state.get('openai_api_key', ''))}`"
-        elif model_provider == "Anthropic Claude":
-            debug_info += f"**Anthropic Key:** `{mask_key(st.session_state.get('anthropic_api_key', ''))}`"
-        elif model_provider == "Google Vertex AI":
-            debug_info += f"**Vertex Project:** `{st.session_state.get('vertexai_project', '')}` **Region:** `{st.session_state.get('vertexai_region', '')}`"
-        elif model_provider == "Ollama (Llama3)":
-            debug_info += f"**Ollama Model:** `{st.session_state.get('ollama_model', '[not set]')}`"
-        st.info(debug_info)
         if st.session_state.conversation:
             try:
                 with st.spinner("Thinking..."):
                     response = st.session_state.conversation.predict(input=prompt)
                 message_placeholder.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
+                st.session_state.messages.append({"role": "assistant", "content": response, "provider": model_provider})
             except Exception as e:
                 error_message = f"Error: {str(e)}"
                 message_placeholder.error(error_message)
-                st.session_state.messages.append({"role": "assistant", "content": error_message})
+                st.session_state.messages.append({"role": "assistant", "content": error_message, "provider": model_provider})
         else:
             error_message = "Chatbot not initialized. Please check your API key configuration."
             message_placeholder.error(error_message)
-            st.session_state.messages.append({"role": "assistant", "content": error_message})
+            st.session_state.messages.append({"role": "assistant", "content": error_message, "provider": model_provider})
 
 # Footer
 st.markdown("---")
