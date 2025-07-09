@@ -24,9 +24,9 @@ A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.
 ## Supported Models
 
 - **OpenAI (GPT-3.5 Turbo)**
-- **Google Gemini (gemini-2.0-flash)**
+- **Google Gemini**
 - **Anthropic Claude (claude-3-sonnet)**
-- **Google Vertex AI (chat-bison)**
+- **Google Vertex AI (gemini-2.5-flash)**
 - **Ollama (Llama3)**
 
 ## Prerequisites
@@ -43,7 +43,7 @@ A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.
 
 1. **Clone or navigate to the project directory:**
    ```bash
-   cd langchain-chatbot
+   cd multimodel-chatbot
    ```
 2. **Create a virtual environment (recommended):**
    ```bash
@@ -152,7 +152,7 @@ Each provider has a unique colored avatar for easy identification:
 ## Project Structure
 
 ```
-langchain-chatbot/
+multimodel-chatbot/
 ├── app.py              # Main Streamlit application
 ├── requirements.txt    # Python dependencies
 ├── .env.example        # Environment variables template
@@ -226,7 +226,7 @@ To get an Anthropic Claude API key, follow these steps:
 
 4. **Create a New API Key**
    - Click "Create Key" or "Generate API Key"
-   - Give your key a descriptive name (e.g., "LangChain Chatbot")
+   - Give your key a descriptive name (e.g., "Multi Model Chatbot")
    - Copy the generated API key immediately (it starts with `sk-ant-`)
 
 5. **Set Up Your Environment**
