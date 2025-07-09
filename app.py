@@ -21,9 +21,9 @@ def mask_key(key):
         return key
     return key[:4] + "..." + key[-4:]
 
-# Page configuration
+# Set page title
 st.set_page_config(
-    page_title="LangChain Chatbot",
+    page_title="Multi Model Chatbot",
     page_icon="🤖",
     layout="wide"
 )
@@ -75,11 +75,19 @@ with st.sidebar:
         ["Single Model", "Multi-Model"],
         index=0,
     )
-
+    
     # Model provider selection
+    provider_display_names = {
+        "OpenAI": "🔵 OpenAI (GPT-3.5)",
+        "Google Gemini": "🟣 Google Gemini (Gemini Pro)",
+        "Anthropic Claude": "🟡 Anthropic Claude (Claude 3)",
+        "Google Vertex AI": "🟢 Google Vertex AI (PaLM)",
+        "Ollama (Llama3)": "🟠 Ollama (Llama 3)"
+    }
+
     model_provider = st.selectbox(
         "Select Model Provider",
-        ["OpenAI", "Google Gemini", "Anthropic Claude", "Google Vertex AI", "Ollama (Llama3)"],
+        list(provider_display_names.keys()),
         index=0,
     )
     if model_provider == "OpenAI":
@@ -123,7 +131,11 @@ with st.sidebar:
     
     st.markdown("---")
     st.subheader("🔑 API Key Status")
-    st.write(f"**Current Provider:** {model_provider}")
+    if view_mode == "Multi-Model":
+        st.write("**Current Providers:** All Available Models")
+        st.write("🔵 OpenAI (GPT-3.5) &nbsp;&nbsp; 🟣 Google Gemini &nbsp;&nbsp; 🟡 Anthropic Claude &nbsp;&nbsp; 🟢 Google Vertex AI &nbsp;&nbsp; 🟠 Ollama (Llama 3)")
+    else:
+        st.write(f"**Current Provider:** {provider_display_names.get(model_provider, 'N/A')}")
     st.write(f"**OpenAI Key:** {'✅' if st.session_state.get('openai_api_key') else '❌'}")
     st.write(f"**Gemini Key:** {'✅' if st.session_state.get('gemini_api_key') else '❌'}")
     st.write(f"**Anthropic Key:** {'✅' if st.session_state.get('anthropic_api_key') else '❌'}")
@@ -215,10 +227,10 @@ if (
         st.session_state.conversation = None
 
 # Header
-st.title("🤖 LangChain Chatbot")
-st.markdown("A simple chatbot built with LangChain, supporting OpenAI (🔵), Google Gemini (🟣), Anthropic Claude (🟡), Google Vertex AI (🟢), Ollama  with Llama3 (🟠), and Streamlit.")
+st.title("🤖 Multi Model Chatbot")
+st.markdown("A simple chatbot built with LangChain and Streamlit and supporting multiple LLMs.")
 
-# Main chat interface
+# Add some spacing
 st.markdown("---")
 
 # Define avatar icons for each provider (same shape, different color)
@@ -230,17 +242,30 @@ PROVIDER_AVATARS = {
     "Ollama (Llama3)": "🟠", # Orange circle
 }
 
-# Display chat messages
-for message in st.session_state.messages:
-    if message["role"] == "assistant":
-        # Use the avatar for the provider that generated this message
-        provider = message.get("provider", st.session_state.get("active_provider", "OpenAI"))
-        avatar = PROVIDER_AVATARS.get(provider, "🤖")
-        with st.chat_message(message["role"], avatar=avatar):
-            st.markdown(message["content"])
-    else:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+# Create a scrollable container for chat messages
+chat_container = st.container()
+with chat_container:
+    # Add custom CSS for scrollable chat area
+    st.markdown("""
+    <style>
+    .stChatMessage {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Display chat messages in scrollable area
+    for message in st.session_state.messages:
+        if message["role"] == "assistant":
+            # Use the avatar for the provider that generated this message
+            provider = message.get("provider", st.session_state.get("active_provider", "OpenAI"))
+            avatar = PROVIDER_AVATARS.get(provider, "🤖")
+            with st.chat_message(message["role"], avatar=avatar):
+                st.markdown(message["content"])
+        else:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
 # Chat input
 if prompt := st.chat_input("What would you like to ask?"):
@@ -328,7 +353,7 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; color: #666;'>
-        Built with ❤️ using LangChain, OpenAI, Gemini, Claude, Vertex AI, Ollama (Llama3), and Streamlit
+        Built with ❤️ using LangChain and Streamlit and supporting multiple LLMs
     </div>
     """,
     unsafe_allow_html=True
