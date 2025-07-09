@@ -1,8 +1,8 @@
 # LangChain Chatbot
 
-A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.5 Turbo), Google Gemini (gemini-2.0-flash), and Google Vertex AI (chat-bison) models. This application provides a conversational interface with memory capabilities, multi-modal support (text and images, where supported by the model), and easy configuration options.
+A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.5 Turbo), Google Gemini (gemini-2.0-flash), Anthropic Claude (claude-3-sonnet), and Google Vertex AI (chat-bison) models. This application provides a conversational interface with memory capabilities, multi-modal support (text and images, where supported by the model), and easy configuration options.
 
-- 🤖 **Multi-provider:** Use OpenAI, Google Gemini, or Google Vertex AI models
+- 🤖 **Multi-provider:** Use OpenAI, Google Gemini, Anthropic Claude, or Google Vertex AI models
 - 🖼️ **Multi-modal:** Supports text and (where available) image input/output with Gemini, Vertex AI, and future OpenAI models
 - 🧠 **Conversation memory:** Remembers chat history for context-aware responses
 - ⚙️ **Configurable:** Easily switch models and API keys in the sidebar
@@ -12,7 +12,7 @@ A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.
 
 - 🤖 Interactive chat interface with Streamlit
 - 🧠 Conversation memory using LangChain
-- ⚙️ Configurable model selection (OpenAI, Gemini, Vertex AI)
+- ⚙️ Configurable model selection (OpenAI, Gemini, Claude, Vertex AI)
 - 🌡️ Adjustable temperature for response creativity
 - 💬 Real-time chat with typing indicators
 - 🗑️ Clear chat functionality
@@ -22,6 +22,7 @@ A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.
 
 - **OpenAI (GPT-3.5 Turbo)**
 - **Google Gemini (gemini-2.0-flash)**
+- **Anthropic Claude (claude-3-sonnet)**
 - **Google Vertex AI (chat-bison)**
 
 ## Prerequisites
@@ -30,6 +31,7 @@ A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.
 - API keys for your chosen provider(s):
   - OpenAI API key (for GPT-3.5 Turbo)
   - Google Gemini API key (for gemini-2.0-flash)
+  - Anthropic API key (for Claude)
   - Google Cloud service account key + project ID (for Vertex AI)
 
 ## Setup
@@ -53,6 +55,7 @@ A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.
    ```env
    OPENAI_API_KEY=your_openai_api_key_here  # [Get your OpenAI API key here](https://platform.openai.com/api-keys)
    GEMINI_API_KEY=your_gemini_api_key_here  # [Get your Gemini API key here](https://aistudio.google.com/app/apikey)
+   ANTHROPIC_API_KEY=your_anthropic_api_key_here  # [Get your Anthropic API key here](https://console.anthropic.com/)
    ```
    - Edit `.env` and replace the placeholders with your actual API keys
 
@@ -62,8 +65,10 @@ Copy `.env.example` to `.env` and fill in the required keys:
 ```
 OPENAI_API_KEY=your-openai-api-key
 GEMINI_API_KEY=your-gemini-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
 VERTEXAI_PROJECT_ID=your-gcp-project-id
 VERTEXAI_REGION=us-central1
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-file.json
 ```
 
 - For Vertex AI, you must also set up a Google Cloud service account and download the JSON key (see Vertex AI Setup above).
@@ -81,31 +86,33 @@ VERTEXAI_REGION=us-central1
    - The application will automatically open in your default browser
    - Usually available at `http://localhost:8501`
 3. **Configure the chatbot:**
-   - Use the sidebar to select your preferred model (OpenAI or Gemini)
+   - Use the sidebar to select your preferred model (OpenAI, Gemini, Claude, or Vertex AI)
    - Enter the appropriate API key for the selected model
    - Adjust the temperature for response creativity
-   - Check if your API key is properly configured (status is shown for both OpenAI and Gemini)
+   - Check if your API key is properly configured (status is shown for all providers)
 4. **Start chatting:**
    - Type your messages in the chat input at the bottom
    - The chatbot will respond with context-aware replies
    - Use the "Clear Chat" button to start a new conversation
 
 ## Notes
-- You can use OpenAI, Google Gemini (gemini-2.0-flash), or Google Vertex AI (chat-bison) models by selecting them in the sidebar.
-- The sidebar will show the status of both API keys and allow you to enter or update them at any time.
+- You can use OpenAI (GPT-3.5 Turbo), Google Gemini (gemini-2.0-flash), Anthropic Claude (claude-3-sonnet), or Google Vertex AI (chat-bison) models by selecting them in the sidebar.
+- The sidebar will show the status of all API keys and allow you to enter or update them at any time.
 - Debug information is shown in the sidebar and above each assistant response to help you verify which model and key are being used.
 
 ## Troubleshooting
 - If you see a 401 error, double-check that the correct API key is entered for the selected model.
 - For Gemini, your key should **not** start with `sk-` (that's an OpenAI key).
 - For OpenAI, your key should start with `sk-`.
+- For Anthropic, your key should start with `sk-ant-`.
 
 ## Configuration Options
 
 ### Models Available
 - **GPT-3.5 Turbo**: Fast and cost-effective (default)
-- **GPT-4**: More capable but slower and more expensive
-- **GPT-4 Turbo Preview**: Latest features and improvements
+- **Gemini 2.0 Flash**: Google's latest model with multi-modal support
+- **Claude 3 Sonnet**: Anthropic's balanced model for general use
+- **Vertex AI Chat Bison**: Google's enterprise model via Vertex AI
 
 ### Temperature Settings
 - **0.0**: Very focused and deterministic responses
@@ -127,6 +134,9 @@ langchain-chatbot/
 
 ### LangChain Integration
 - **ChatOpenAI**: Connects to OpenAI's API
+- **ChatGoogleGenerativeAI**: Connects to Google's Gemini API
+- **ChatAnthropic**: Connects to Anthropic's Claude API
+- **ChatVertexAI**: Connects to Google's Vertex AI
 - **ConversationBufferMemory**: Maintains conversation history
 - **ConversationChain**: Orchestrates the chat flow
 
@@ -142,9 +152,9 @@ langchain-chatbot/
 To add support for additional models, modify the model selection in `app.py`:
 
 ```python
-model = st.selectbox(
-    "Select Model",
-    ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo-preview", "your-new-model"],
+model_provider = st.selectbox(
+    "Select Model Provider",
+    ["OpenAI", "Google Gemini", "Anthropic Claude", "Google Vertex AI", "your-new-provider"],
     index=0
 )
 ```
@@ -161,7 +171,53 @@ Feel free to submit issues, feature requests, or pull requests to improve this c
 
 ## License
 
-This project is open source and available under the MIT License. 
+This project is open source and available under the MIT License.
+
+## How to Get Anthropic Claude API Key
+
+To get an Anthropic Claude API key, follow these steps:
+
+### Step-by-Step Guide
+
+1. **Create an Anthropic Account**
+   - Go to [https://console.anthropic.com/](https://console.anthropic.com/)
+   - Click "Sign Up" or "Get Started"
+   - Create an account using your email address
+
+2. **Verify Your Account**
+   - Check your email for a verification link
+   - Click the link to verify your account
+   - Complete any additional verification steps if required
+
+3. **Access the API Console**
+   - Log in to your Anthropic console
+   - Navigate to the "API Keys" section (usually in the left sidebar)
+
+4. **Create a New API Key**
+   - Click "Create Key" or "Generate API Key"
+   - Give your key a descriptive name (e.g., "LangChain Chatbot")
+   - Copy the generated API key immediately (it starts with `sk-ant-`)
+
+5. **Set Up Your Environment**
+   - Add the key to your `.env` file:
+     ```
+     ANTHROPIC_API_KEY=sk-ant-your-actual-key-here
+     ```
+   - Or enter it directly in the app's sidebar when using Claude
+
+### Important Notes:
+
+- **Key Format**: Anthropic API keys start with `sk-ant-` (not `sk-` like OpenAI)
+- **Security**: Keep your API key secure and never commit it to version control
+- **Billing**: Anthropic may require you to add billing information before using the API
+- **Rate Limits**: Check Anthropic's documentation for current rate limits and pricing
+
+### Troubleshooting:
+- If you see a 401 error, make sure your key starts with `sk-ant-`
+- If you get a billing error, you may need to add payment information to your Anthropic account
+- The key should be about 50+ characters long
+
+Once you have your API key, you can select "Anthropic Claude" in the app's sidebar and start chatting with Claude!
 
 ## How to Find Your Google Cloud Project ID
 
