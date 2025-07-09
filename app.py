@@ -69,6 +69,13 @@ if "gac_exists" not in st.session_state:
 with st.sidebar:
     st.title("🔑 API & Model Configuration")
 
+    # Add a high-level toggle for single vs multi-model view
+    view_mode = st.sidebar.radio(
+        "Chat Mode",
+        ["Single Model", "Multi-Model"],
+        index=0,
+    )
+
     # Model provider selection
     model_provider = st.selectbox(
         "Select Model Provider",
@@ -244,24 +251,77 @@ if prompt := st.chat_input("What would you like to ask?"):
     with st.chat_message("user"):
         st.markdown(prompt)
     
-    # Get bot response
-    avatar = PROVIDER_AVATARS.get(model_provider, "🤖")
-    with st.chat_message("assistant", avatar=avatar):
-        message_placeholder = st.empty()
-        if st.session_state.conversation:
-            try:
-                with st.spinner("Thinking..."):
-                    response = st.session_state.conversation.predict(input=prompt)
-                message_placeholder.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response, "provider": model_provider})
-            except Exception as e:
-                error_message = f"Error: {str(e)}"
+    if view_mode == "Single Model":
+        # Single model mode (current behavior)
+        avatar = PROVIDER_AVATARS.get(model_provider, "🤖")
+        with st.chat_message("assistant", avatar=avatar):
+            message_placeholder = st.empty()
+            if st.session_state.conversation:
+                try:
+                    with st.spinner("Thinking..."):
+                        response = st.session_state.conversation.predict(input=prompt)
+                    message_placeholder.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response, "provider": model_provider})
+                except Exception as e:
+                    error_message = f"Error: {str(e)}"
+                    message_placeholder.error(error_message)
+                    st.session_state.messages.append({"role": "assistant", "content": error_message, "provider": model_provider})
+            else:
+                error_message = "Chatbot not initialized. Please check your API key configuration."
                 message_placeholder.error(error_message)
                 st.session_state.messages.append({"role": "assistant", "content": error_message, "provider": model_provider})
-        else:
-            error_message = "Chatbot not initialized. Please check your API key configuration."
-            message_placeholder.error(error_message)
-            st.session_state.messages.append({"role": "assistant", "content": error_message, "provider": model_provider})
+    else:
+        # Multi-model mode: query all providers and show all responses
+        all_providers = [
+            ("OpenAI", ChatOpenAI(
+                openai_api_key=st.session_state.get("openai_api_key"),
+                model="gpt-3.5-turbo",
+                temperature=0.7,
+            )),
+            ("Google Gemini", ChatGoogleGenerativeAI(
+                google_api_key=st.session_state.get("gemini_api_key"),
+                model="gemini-2.0-flash",
+                temperature=0.7,
+            )),
+            ("Anthropic Claude", ChatAnthropic(
+                anthropic_api_key=st.session_state.get("anthropic_api_key"),
+                model=st.session_state.get("claude_model", "claude-3-haiku-20240307"),
+                temperature=0.7,
+            )),
+            ("Google Vertex AI", ChatVertexAI(
+                project=st.session_state.get("vertexai_project"),
+                location=st.session_state.get("vertexai_region", "us-central1"),
+                model=st.session_state.get("vertexai_model", "chat-bison"),
+                temperature=0.7,
+            )),
+            ("Ollama (Llama3)", ChatOllama(
+                model=st.session_state.get("ollama_model", "llama3"),
+                temperature=st.session_state.get("ollama_temperature", 0.7),
+            )),
+        ]
+        for provider_name, llm in all_providers:
+            avatar = PROVIDER_AVATARS.get(provider_name, "🤖")
+            with st.chat_message("assistant", avatar=avatar):
+                message_placeholder = st.empty()
+                try:
+                    with st.spinner(f"{provider_name} thinking..."):
+                        # Use a simple ConversationChain for each provider (no memory)
+                        response = llm.invoke(prompt) if hasattr(llm, "invoke") else llm.predict(input=prompt)
+                        # Extract only the text content for chat models
+                        if hasattr(response, "content") and isinstance(response.content, str):
+                            response_text = response.content.strip()
+                        elif isinstance(response, dict):
+                            response_text = response.get("content") or response.get("text") or str(response)
+                        else:
+                            response_text = str(response)
+                        response_text = response_text.strip()
+                    answer = f"**{provider_name}:**\n{response_text}"
+                    message_placeholder.markdown(answer)
+                    st.session_state.messages.append({"role": "assistant", "content": answer, "provider": provider_name})
+                except Exception as e:
+                    error_message = f"**{provider_name}:**\nError: {str(e)}"
+                    message_placeholder.error(error_message)
+                    st.session_state.messages.append({"role": "assistant", "content": error_message, "provider": provider_name})
 
 # Footer
 st.markdown("---")
