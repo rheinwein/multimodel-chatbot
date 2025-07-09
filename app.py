@@ -214,10 +214,25 @@ st.markdown("A simple chatbot built with LangChain, supporting OpenAI, Gemini, C
 # Main chat interface
 st.markdown("---")
 
+# Define avatar icons for each provider (same shape, different color)
+PROVIDER_AVATARS = {
+    "OpenAI": "🔵",           # Blue circle
+    "Google Gemini": "🟣",    # Purple circle
+    "Anthropic Claude": "🟡", # Yellow circle
+    "Google Vertex AI": "🟢", # Green circle
+    "Ollama (Llama3)": "🟠", # Orange circle
+}
+
 # Display chat messages
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    if message["role"] == "assistant":
+        # Use the avatar for the current provider
+        avatar = PROVIDER_AVATARS.get(st.session_state.get("active_provider", "OpenAI"), "🤖")
+        with st.chat_message(message["role"], avatar=avatar):
+            st.markdown(message["content"])
+    else:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
 # Chat input
 if prompt := st.chat_input("What would you like to ask?"):
@@ -229,7 +244,8 @@ if prompt := st.chat_input("What would you like to ask?"):
         st.markdown(prompt)
     
     # Get bot response
-    with st.chat_message("assistant"):
+    avatar = PROVIDER_AVATARS.get(model_provider, "🤖")
+    with st.chat_message("assistant", avatar=avatar):
         message_placeholder = st.empty()
         debug_info = f"**[DEBUG] Model:** `{model_provider}`  "
         if model_provider == "Google Gemini":
