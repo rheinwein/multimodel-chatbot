@@ -49,18 +49,13 @@ A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.
    ```bash
    pip install -r requirements.txt
    ```
-4. **Set up your environment variables:**
-   - Copy `.env.example` to `.env`
-   - Add your API keys:
-   ```env
-   OPENAI_API_KEY=your_openai_api_key_here  # [Get your OpenAI API key here](https://platform.openai.com/api-keys)
-   GEMINI_API_KEY=your_gemini_api_key_here  # [Get your Gemini API key here](https://aistudio.google.com/app/apikey)
-   ANTHROPIC_API_KEY=your_anthropic_api_key_here  # [Get your Anthropic API key here](https://console.anthropic.com/)
-   ```
-   - Edit `.env` and replace the placeholders with your actual API keys
 
 ### Environment Variables
 Copy `.env.example` to `.env` and fill in the required keys:
+
+- [Get your OpenAI API key here](https://platform.openai.com/api-keys)
+- [Get your Gemini API key here](https://aistudio.google.com/app/apikey)
+- [Get your Anthropic API key here](https://console.anthropic.com/)
 
 ```
 OPENAI_API_KEY=your-openai-api-key
