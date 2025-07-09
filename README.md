@@ -2,7 +2,7 @@
 
 A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.5 Turbo), Google Gemini (gemini-2.0-flash), Anthropic Claude (claude-3-sonnet), and Google Vertex AI (chat-bison) models. This application provides a conversational interface with memory capabilities, multi-modal support (text and images, where supported by the model), and easy configuration options.
 
-- 🤖 **Multi-provider:** Use OpenAI, Google Gemini, Anthropic Claude, or Google Vertex AI models
+- 🤖 **Multi-provider:** Use OpenAI, Google Gemini, Anthropic Claude, Google Vertex AI, or Ollama (Llama3) models
 - 🖼️ **Multi-modal:** Supports text and (where available) image input/output with Gemini, Vertex AI, and future OpenAI models
 - 🧠 **Conversation memory:** Remembers chat history for context-aware responses
 - ⚙️ **Configurable:** Easily switch models and API keys in the sidebar
@@ -24,6 +24,7 @@ A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.
 - **Google Gemini (gemini-2.0-flash)**
 - **Anthropic Claude (claude-3-sonnet)**
 - **Google Vertex AI (chat-bison)**
+- **Ollama (Llama3)**
 
 ## Prerequisites
 
@@ -33,6 +34,7 @@ A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.
   - Google Gemini API key (for gemini-2.0-flash)
   - Anthropic API key (for Claude)
   - Google Cloud service account key + project ID (for Vertex AI)
+  - [Ollama](https://ollama.com/) installed and running locally (for Llama3)
 
 ## Setup
 
@@ -49,6 +51,16 @@ A simple and interactive chatbot built with LangChain, supporting OpenAI (GPT-3.
    ```bash
    pip install -r requirements.txt
    ```
+4. **Install Ollama (for Llama3 support):**
+   - [Download and install Ollama](https://ollama.com/download) for your OS (macOS, Linux, Windows WSL)
+   - Start Ollama (it runs as a background service):
+     ```bash
+     ollama serve
+     ```
+   - Pull the Llama3 model:
+     ```bash
+     ollama pull llama3
+     ```
 
 ### Environment Variables
 Copy `.env.example` to `.env` and fill in the required keys:
@@ -81,18 +93,19 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-file.json
    - The application will automatically open in your default browser
    - Usually available at `http://localhost:8501`
 3. **Configure the chatbot:**
-   - Use the sidebar to select your preferred model (OpenAI, Gemini, Claude, or Vertex AI)
-   - Enter the appropriate API key for the selected model
+   - Use the sidebar to select your preferred model (OpenAI, Gemini, Claude, Vertex AI, or Ollama (Llama3))
+   - Enter the appropriate API key for the selected model (not needed for Ollama)
+   - For Ollama, set the model name (default: `llama3`) and temperature
    - Adjust the temperature for response creativity
-   - Check if your API key is properly configured (status is shown for all providers)
+   - Check if your API key or model is properly configured (status is shown for all providers)
 4. **Start chatting:**
    - Type your messages in the chat input at the bottom
    - The chatbot will respond with context-aware replies
    - Use the "Clear Chat" button to start a new conversation
 
 ## Notes
-- You can use OpenAI (GPT-3.5 Turbo), Google Gemini (gemini-2.0-flash), Anthropic Claude (claude-3-sonnet), or Google Vertex AI (chat-bison) models by selecting them in the sidebar.
-- The sidebar will show the status of all API keys and allow you to enter or update them at any time.
+- You can use OpenAI (GPT-3.5 Turbo), Google Gemini (gemini-2.0-flash), Anthropic Claude (claude-3-sonnet), Google Vertex AI (chat-bison), or Ollama (Llama3) models by selecting them in the sidebar.
+- The sidebar will show the status of all API keys and allow you to enter or update them at any time. For Ollama, it will show the model name.
 - Debug information is shown in the sidebar and above each assistant response to help you verify which model and key are being used.
 
 ## Troubleshooting
@@ -108,6 +121,7 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-file.json
 - **Gemini 2.0 Flash**: Google's latest model with multi-modal support
 - **Claude 3 Sonnet**: Anthropic's balanced model for general use
 - **Vertex AI Chat Bison**: Google's enterprise model via Vertex AI
+- **Ollama (Llama3)**: Open-source LLM running locally via Ollama
 
 ### Temperature Settings
 - **0.0**: Very focused and deterministic responses
@@ -149,7 +163,7 @@ To add support for additional models, modify the model selection in `app.py`:
 ```python
 model_provider = st.selectbox(
     "Select Model Provider",
-    ["OpenAI", "Google Gemini", "Anthropic Claude", "Google Vertex AI", "your-new-provider"],
+    ["OpenAI", "Google Gemini", "Anthropic Claude", "Google Vertex AI", "Ollama (Llama3)", "your-new-provider"],
     index=0
 )
 ```
@@ -285,4 +299,33 @@ To use Vertex AI, you need a Google Cloud service account key (JSON file) with t
 **References:**
 - [Google Cloud: Creating and managing service account keys](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
 - [Vertex AI Python Client Authentication](https://cloud.google.com/vertex-ai/docs/start/client-auth) 
+
+### Ollama (Llama3) Setup
+
+1. **Install Ollama:**
+   - Download from [ollama.com/download](https://ollama.com/download) and follow the installation instructions for your OS.
+2. **[macOS] If you installed via the .app and get 'command not found', create a symlink:**
+   - This lets you run `ollama` from any terminal window:
+     ```sh
+     sudo ln -s /Applications/Ollama.app/Contents/Resources/ollama /usr/local/bin/ollama
+     ```
+   - Then test with:
+     ```sh
+     ollama --version
+     ```
+3. **Start Ollama:**
+   - Run `ollama serve` in your terminal (Ollama may start automatically on some systems).
+4. **Pull the Llama3 model:**
+   - Run `ollama pull llama3` to download the model.
+5. **Test a One-off Prompt**
+   - You can also run a single prompt and get a response:
+      ```sh
+      echo "Tell me a joke." | ollama run llama3
+      ```
+   - You should see a joke as output.
+5. **Select Ollama (Llama3) in the sidebar:**
+   - No API key is required. Set the model name (default: `llama3`) and temperature as desired.
+6. **Chat!**
+
+For more details, see the [Ollama documentation](https://ollama.com/). 
 

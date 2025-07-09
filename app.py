@@ -8,6 +8,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain.schema import HumanMessage, AIMessage
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
+from langchain_ollama import ChatOllama
 
 # Load environment variables
 load_dotenv()
@@ -51,6 +52,10 @@ if "vertexai_region" not in st.session_state:
     st.session_state.vertexai_region = os.getenv("VERTEXAI_REGION", "us-central1")
 if "vertexai_model" not in st.session_state:
     st.session_state.vertexai_model = os.getenv("VERTEXAI_MODEL", "chat-bison")
+if "ollama_model" not in st.session_state:
+    st.session_state.ollama_model = os.getenv("OLLAMA_MODEL", "llama3")
+if "ollama_temperature" not in st.session_state:
+    st.session_state.ollama_temperature = float(os.getenv("OLLAMA_TEMPERATURE", 0.7))
 # GOOGLE_APPLICATION_CREDENTIALS check
 if "google_application_credentials" not in st.session_state:
     st.session_state.google_application_credentials = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
@@ -67,7 +72,7 @@ with st.sidebar:
     # Model provider selection
     model_provider = st.selectbox(
         "Select Model Provider",
-        ["OpenAI", "Google Gemini", "Anthropic Claude", "Google Vertex AI"],
+        ["OpenAI", "Google Gemini", "Anthropic Claude", "Google Vertex AI", "Ollama (Llama3)"],
         index=0,
     )
     if model_provider == "OpenAI":
@@ -97,6 +102,17 @@ with st.sidebar:
             "Vertex AI Model",
             value=st.session_state.get("vertexai_model", "chat-bison")
         )
+    elif model_provider == "Ollama (Llama3)":
+        ollama_model = st.text_input("Ollama Model", value=st.session_state.get("ollama_model", "llama3"))
+        if ollama_model:
+            st.session_state["ollama_model"] = ollama_model
+        st.session_state.ollama_temperature = st.slider(
+            "Ollama Temperature",
+            min_value=0.0,
+            max_value=1.0,
+            value=st.session_state.get("ollama_temperature", 0.7),
+            step=0.05,
+        )
     
     st.markdown("---")
     st.subheader("🔑 API Key Status")
@@ -109,6 +125,7 @@ with st.sidebar:
     if st.session_state.gac_set and st.session_state.gac_exists:
         st.write(f"**Google Vertex AI Key:** ✅")
         st.write(f"**Google Vertex AI Key File Exists:** ✅")
+    st.write(f"**Ollama Model:** {'✅' if st.session_state.get('ollama_model') else '❌'}")
     
     # Show masked keys for debugging
     st.markdown("---")
@@ -121,6 +138,7 @@ with st.sidebar:
     if st.session_state.gac_set and st.session_state.gac_exists:
         st.write(f"**Google Vertex AI:** `{st.session_state.google_application_credentials or '[not set]'}`")
         st.write(f"**Google Vertex AI File Exists:** {'✅' if st.session_state.gac_exists else '❌'}")
+    st.write(f"**Ollama Model:** `{st.session_state.get('ollama_model', '[not set]')}`")
 
     # Clear chat button
     if st.button("Clear Chat"):
@@ -155,6 +173,11 @@ elif model_provider == "Google Vertex AI":
         model=st.session_state.get("vertexai_model", "chat-bison"),
         temperature=0.7,
     )
+elif model_provider == "Ollama (Llama3)":
+    llm = ChatOllama(
+        model=st.session_state.get("ollama_model", "llama3"),
+        temperature=st.session_state.get("ollama_temperature", 0.7),
+    )
 else:
     st.error("No valid model provider selected.")
     st.stop()
@@ -186,7 +209,7 @@ if (
 
 # Header
 st.title("🤖 LangChain Chatbot")
-st.markdown("A simple chatbot built with LangChain, OpenAI, Gemini, Claude, Google Vertex AI, and Streamlit")
+st.markdown("A simple chatbot built with LangChain, supporting OpenAI, Gemini, Claude, Google Vertex AI, Ollama (Llama3), and Streamlit.")
 
 # Main chat interface
 st.markdown("---")
@@ -217,6 +240,8 @@ if prompt := st.chat_input("What would you like to ask?"):
             debug_info += f"**Anthropic Key:** `{mask_key(st.session_state.get('anthropic_api_key', ''))}`"
         elif model_provider == "Google Vertex AI":
             debug_info += f"**Vertex Project:** `{st.session_state.get('vertexai_project', '')}` **Region:** `{st.session_state.get('vertexai_region', '')}`"
+        elif model_provider == "Ollama (Llama3)":
+            debug_info += f"**Ollama Model:** `{st.session_state.get('ollama_model', '[not set]')}`"
         st.info(debug_info)
         if st.session_state.conversation:
             try:
@@ -238,7 +263,7 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; color: #666;'>
-        Built with ❤️ using LangChain, OpenAI, Gemini, Claude, and Streamlit
+        Built with ❤️ using LangChain, OpenAI, Gemini, Claude, Vertex AI, Ollama (Llama3), and Streamlit
     </div>
     """,
     unsafe_allow_html=True
