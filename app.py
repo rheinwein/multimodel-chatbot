@@ -21,6 +21,15 @@ def mask_key(key):
         return key
     return key[:4] + "..." + key[-4:]
 
+# List of all available providers
+ALL_PROVIDERS = [
+    "OpenAI",
+    "Google Gemini",
+    "Anthropic Claude",
+    "Google Vertex AI",
+    "Ollama (Llama3)",
+]
+
 # Set page title
 st.set_page_config(
     page_title="Multi Model Chatbot",
@@ -75,8 +84,27 @@ with st.sidebar:
         ["Single Model", "Multi-Model"],
         index=0,
     )
-    
-    # Model provider selection
+
+    # Model selection (multi-select)
+    selected_providers = st.multiselect(
+        "Select Model Providers",
+        ALL_PROVIDERS,
+        default=[ALL_PROVIDERS[0]],
+    )
+    if not selected_providers:
+        st.warning("Please select at least one model provider.")
+        st.stop()
+
+    # Model provider selection for single model mode
+    if view_mode == "Single Model":
+        model_provider = st.selectbox(
+            "Select Model Provider (Single Model Mode)",
+            selected_providers,
+            index=0,
+        )
+    else:
+        model_provider = None  # Not used in multi-model mode
+
     provider_display_names = {
         "OpenAI": "🔵 OpenAI (GPT-3.5)",
         "Google Gemini": "🟣 Google Gemini (Gemini Pro)",
@@ -85,67 +113,67 @@ with st.sidebar:
         "Ollama (Llama3)": "🟠 Ollama (Llama 3)"
     }
 
-    model_provider = st.selectbox(
-        "Select Model Provider",
-        list(provider_display_names.keys()),
-        index=0,
-    )
-    if model_provider == "OpenAI":
-        openai_api_key = st.text_input("OpenAI API Key", type="password", value=st.session_state.get("openai_api_key", ""))
-        if openai_api_key:
-            st.session_state["openai_api_key"] = openai_api_key
-    elif model_provider == "Google Gemini":
-        gemini_api_key = st.text_input("Gemini API Key", type="password", value=st.session_state.get("gemini_api_key", ""))
-        if gemini_api_key:
-            st.session_state["gemini_api_key"] = gemini_api_key
-    elif model_provider == "Anthropic Claude":
-        anthropic_api_key = st.text_input("Anthropic API Key", type="password", value=st.session_state.get("anthropic_api_key", ""))
-        if anthropic_api_key:
-            st.session_state["anthropic_api_key"] = anthropic_api_key
-        st.session_state.claude_model = st.text_input(
-            "Claude Model",
-            value=st.session_state.get("claude_model", "claude-3-haiku-20240307")
-        )
-    elif model_provider == "Google Vertex AI":
-        vertexai_project = st.text_input("Vertex AI Project ID", value=st.session_state.get("vertexai_project", ""))
-        vertexai_region = st.text_input("Vertex AI Region", value=st.session_state.get("vertexai_region", "us-central1"))
-        if vertexai_project:
-            st.session_state["vertexai_project"] = vertexai_project
-        if vertexai_region:
-            st.session_state["vertexai_region"] = vertexai_region
-        st.session_state.vertexai_model = st.text_input(
-            "Vertex AI Model",
-            value=st.session_state.get("vertexai_model", "chat-bison")
-        )
-    elif model_provider == "Ollama (Llama3)":
-        ollama_model = st.text_input("Ollama Model", value=st.session_state.get("ollama_model", "llama3"))
-        if ollama_model:
-            st.session_state["ollama_model"] = ollama_model
-        st.session_state.ollama_temperature = st.slider(
-            "Ollama Temperature",
-            min_value=0.0,
-            max_value=1.0,
-            value=st.session_state.get("ollama_temperature", 0.7),
-            step=0.05,
-        )
-    
-    st.markdown("---")
     st.subheader("🔑 API Key Status")
-    if view_mode == "Multi-Model":
-        st.write("**Current Providers:** All Available Models")
-        st.write("🔵 OpenAI (GPT-3.5) &nbsp;&nbsp; 🟣 Google Gemini &nbsp;&nbsp; 🟡 Anthropic Claude &nbsp;&nbsp; 🟢 Google Vertex AI &nbsp;&nbsp; 🟠 Ollama (Llama 3)")
-    else:
-        st.write(f"**Current Provider:** {provider_display_names.get(model_provider, 'N/A')}")
-    st.write(f"**OpenAI Key:** {'✅' if st.session_state.get('openai_api_key') else '❌'}")
-    st.write(f"**Gemini Key:** {'✅' if st.session_state.get('gemini_api_key') else '❌'}")
-    st.write(f"**Anthropic Key:** {'✅' if st.session_state.get('anthropic_api_key') else '❌'}")
-    st.write(f"**Vertex Project:** {'✅' if st.session_state.get('vertexai_project') else '❌'}")
-    st.write(f"**Vertex Region:** {'✅' if st.session_state.get('vertexai_region') else '❌'}")
-    if st.session_state.gac_set and st.session_state.gac_exists:
-        st.write(f"**Google Vertex AI Key:** ✅")
-        st.write(f"**Google Vertex AI Key File Exists:** ✅")
-    st.write(f"**Ollama Model:** {'✅' if st.session_state.get('ollama_model') else '❌'}")
-    
+    for prov in selected_providers:
+        # Determine status and label
+        if prov == "OpenAI":
+            status = '✅' if st.session_state.get('openai_api_key') else '❌'
+            label = f"OpenAI Key {status}"
+            with st.expander(label, expanded=not st.session_state.get('openai_api_key')):
+                openai_api_key = st.text_input("OpenAI API Key", type="password", value=st.session_state.get("openai_api_key", ""), key="openai_api_key_input")
+                if openai_api_key:
+                    st.session_state["openai_api_key"] = openai_api_key
+        elif prov == "Google Gemini":
+            status = '✅' if st.session_state.get('gemini_api_key') else '❌'
+            label = f"Gemini Key {status}"
+            with st.expander(label, expanded=not st.session_state.get('gemini_api_key')):
+                gemini_api_key = st.text_input("Gemini API Key", type="password", value=st.session_state.get("gemini_api_key", ""), key="gemini_api_key_input")
+                if gemini_api_key:
+                    st.session_state["gemini_api_key"] = gemini_api_key
+        elif prov == "Anthropic Claude":
+            status = '✅' if st.session_state.get('anthropic_api_key') else '❌'
+            label = f"Anthropic Key {status}"
+            with st.expander(label, expanded=not st.session_state.get('anthropic_api_key')):
+                anthropic_api_key = st.text_input("Anthropic API Key", type="password", value=st.session_state.get("anthropic_api_key", ""), key="anthropic_api_key_input")
+                if anthropic_api_key:
+                    st.session_state["anthropic_api_key"] = anthropic_api_key
+                st.session_state.claude_model = st.text_input(
+                    "Claude Model",
+                    value=st.session_state.get("claude_model", "claude-3-haiku-20240307"),
+                    key="claude_model_input"
+                )
+        elif prov == "Google Vertex AI":
+            status_project = '✅' if st.session_state.get('vertexai_project') else '❌'
+            status_region = '✅' if st.session_state.get('vertexai_region') else '❌'
+            label = f"Vertex Project {status_project} / Region {status_region}"
+            with st.expander(label, expanded=not (st.session_state.get('vertexai_project') and st.session_state.get('vertexai_region'))):
+                vertexai_project = st.text_input("Vertex AI Project ID", value=st.session_state.get("vertexai_project", ""), key="vertexai_project_input")
+                vertexai_region = st.text_input("Vertex AI Region", value=st.session_state.get("vertexai_region", "us-central1"), key="vertexai_region_input")
+                if vertexai_project:
+                    st.session_state["vertexai_project"] = vertexai_project
+                if vertexai_region:
+                    st.session_state["vertexai_region"] = vertexai_region
+                st.session_state.vertexai_model = st.text_input(
+                    "Vertex AI Model",
+                    value=st.session_state.get("vertexai_model", "chat-bison"),
+                    key="vertexai_model_input"
+                )
+        elif prov == "Ollama (Llama3)":
+            status = '✅' if st.session_state.get('ollama_model') else '❌'
+            label = f"Ollama Model {status}"
+            with st.expander(label, expanded=not st.session_state.get('ollama_model')):
+                ollama_model = st.text_input("Ollama Model", value=st.session_state.get("ollama_model", "llama3"), key="ollama_model_input")
+                if ollama_model:
+                    st.session_state["ollama_model"] = ollama_model
+                st.session_state.ollama_temperature = st.slider(
+                    "Ollama Temperature",
+                    min_value=0.0,
+                    max_value=1.0,
+                    value=st.session_state.get("ollama_temperature", 0.7),
+                    step=0.05,
+                    key="ollama_temperature_input"
+                )
+
     # Show masked keys for debugging
     st.markdown("---")
     st.subheader("🔍 Debug Info")
@@ -166,40 +194,108 @@ with st.sidebar:
             st.session_state.conversation.memory.clear()
         st.rerun()
 
+# Helper: Check if provider has a valid API key/config
+def provider_has_key(provider):
+    if provider == "OpenAI":
+        return bool(st.session_state.get("openai_api_key"))
+    if provider == "Google Gemini":
+        return bool(st.session_state.get("gemini_api_key"))
+    if provider == "Anthropic Claude":
+        return bool(st.session_state.get("anthropic_api_key"))
+    if provider == "Google Vertex AI":
+        return bool(st.session_state.get("vertexai_project")) and bool(st.session_state.get("vertexai_region"))
+    if provider == "Ollama (Llama3)":
+        return bool(st.session_state.get("ollama_model"))
+    return False
+
 # LLM selection logic
-if model_provider == "OpenAI":
-    llm = ChatOpenAI(
-        openai_api_key=st.session_state.get("openai_api_key"),
-        model="gpt-3.5-turbo",
-        temperature=0.7,
-    )
-elif model_provider == "Google Gemini":
-    llm = ChatGoogleGenerativeAI(
-        google_api_key=st.session_state.get("gemini_api_key"),
-        model="gemini-2.0-flash",
-        temperature=0.7,
-    )
-elif model_provider == "Anthropic Claude":
-    llm = ChatAnthropic(
-        anthropic_api_key=st.session_state.get("anthropic_api_key"),
-        model=st.session_state.get("claude_model", "claude-3-haiku-20240307"),
-        temperature=0.7,
-    )
-elif model_provider == "Google Vertex AI":
-    llm = ChatVertexAI(
-        project=st.session_state.get("vertexai_project"),
-        location=st.session_state.get("vertexai_region", "us-central1"),
-        model=st.session_state.get("vertexai_model", "chat-bison"),
-        temperature=0.7,
-    )
-elif model_provider == "Ollama (Llama3)":
-    llm = ChatOllama(
-        model=st.session_state.get("ollama_model", "llama3"),
-        temperature=st.session_state.get("ollama_temperature", 0.7),
-    )
+if view_mode == "Single Model":
+    # Fallback logic for single model mode
+    if not provider_has_key(model_provider):
+        for prov in selected_providers:
+            if provider_has_key(prov):
+                model_provider = prov
+                st.info(f"Falling back to {prov} as it has a valid API key/config.")
+                break
+        else:
+            st.warning("No selected provider with a valid API key/config found. Please enter at least one API key.")
+            st.stop()
+    # LLM instantiation for single model
+    if model_provider == "OpenAI":
+        llm = ChatOpenAI(
+            openai_api_key=st.session_state.get("openai_api_key"),
+            model="gpt-3.5-turbo",
+            temperature=0.7,
+        )
+    elif model_provider == "Google Gemini":
+        llm = ChatGoogleGenerativeAI(
+            google_api_key=st.session_state.get("gemini_api_key"),
+            model="gemini-2.0-flash",
+            temperature=0.7,
+        )
+    elif model_provider == "Anthropic Claude":
+        llm = ChatAnthropic(
+            anthropic_api_key=st.session_state.get("anthropic_api_key"),
+            model=st.session_state.get("claude_model", "claude-3-haiku-20240307"),
+            temperature=0.7,
+        )
+    elif model_provider == "Google Vertex AI":
+        llm = ChatVertexAI(
+            project=st.session_state.get("vertexai_project"),
+            location=st.session_state.get("vertexai_region", "us-central1"),
+            model=st.session_state.get("vertexai_model", "chat-bison"),
+            temperature=0.7,
+        )
+    elif model_provider == "Ollama (Llama3)":
+        llm = ChatOllama(
+            model=st.session_state.get("ollama_model", "llama3"),
+            temperature=st.session_state.get("ollama_temperature", 0.7),
+        )
+    else:
+        st.error("No valid model provider selected.")
+        st.stop()
 else:
-    st.error("No valid model provider selected.")
-    st.stop()
+    # Multi-model mode: only use selected providers with valid keys/configs
+    multi_llms = []
+    for prov in selected_providers:
+        if not provider_has_key(prov):
+            continue
+        if prov == "OpenAI":
+            llm = ChatOpenAI(
+                openai_api_key=st.session_state.get("openai_api_key"),
+                model="gpt-3.5-turbo",
+                temperature=0.7,
+            )
+        elif prov == "Google Gemini":
+            llm = ChatGoogleGenerativeAI(
+                google_api_key=st.session_state.get("gemini_api_key"),
+                model="gemini-2.0-flash",
+                temperature=0.7,
+            )
+        elif prov == "Anthropic Claude":
+            llm = ChatAnthropic(
+                anthropic_api_key=st.session_state.get("anthropic_api_key"),
+                model=st.session_state.get("claude_model", "claude-3-haiku-20240307"),
+                temperature=0.7,
+            )
+        elif prov == "Google Vertex AI":
+            llm = ChatVertexAI(
+                project=st.session_state.get("vertexai_project"),
+                location=st.session_state.get("vertexai_region", "us-central1"),
+                model=st.session_state.get("vertexai_model", "chat-bison"),
+                temperature=0.7,
+            )
+        elif prov == "Ollama (Llama3)":
+            llm = ChatOllama(
+                model=st.session_state.get("ollama_model", "llama3"),
+                temperature=st.session_state.get("ollama_temperature", 0.7),
+            )
+        else:
+            continue
+        multi_llms.append((prov, llm))
+    if not multi_llms:
+        st.warning("No selected provider with a valid API key/config found. Please enter at least one API key.")
+        st.stop()
 
 # After model_provider selection in the sidebar
 if "active_provider" not in st.session_state:
@@ -297,34 +393,7 @@ if prompt := st.chat_input("What would you like to ask?"):
                 st.session_state.messages.append({"role": "assistant", "content": error_message, "provider": model_provider})
     else:
         # Multi-model mode: query all providers and show all responses
-        all_providers = [
-            ("OpenAI", ChatOpenAI(
-                openai_api_key=st.session_state.get("openai_api_key"),
-                model="gpt-3.5-turbo",
-                temperature=0.7,
-            )),
-            ("Google Gemini", ChatGoogleGenerativeAI(
-                google_api_key=st.session_state.get("gemini_api_key"),
-                model="gemini-2.0-flash",
-                temperature=0.7,
-            )),
-            ("Anthropic Claude", ChatAnthropic(
-                anthropic_api_key=st.session_state.get("anthropic_api_key"),
-                model=st.session_state.get("claude_model", "claude-3-haiku-20240307"),
-                temperature=0.7,
-            )),
-            ("Google Vertex AI", ChatVertexAI(
-                project=st.session_state.get("vertexai_project"),
-                location=st.session_state.get("vertexai_region", "us-central1"),
-                model=st.session_state.get("vertexai_model", "chat-bison"),
-                temperature=0.7,
-            )),
-            ("Ollama (Llama3)", ChatOllama(
-                model=st.session_state.get("ollama_model", "llama3"),
-                temperature=st.session_state.get("ollama_temperature", 0.7),
-            )),
-        ]
-        for provider_name, llm in all_providers:
+        for provider_name, llm in multi_llms:
             avatar = PROVIDER_AVATARS.get(provider_name, "🤖")
             with st.chat_message("assistant", avatar=avatar):
                 message_placeholder = st.empty()
